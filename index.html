@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Apollo XV</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script type="text/javascript" src="element.js"></script>
+	<script type="text/javascript" src="svg.js"></script>
+	<script type="text/javascript">
+
+		function getparams() {
+			var search = window.location.search
+			if (search[0] == '?') {search = search.substring(1)}
+			if (!search) {return {}}
+			var params = search.split('&')
+			var object = {}
+			for (var i = 0; i < params.length; i++) {
+				let pair = params[i].split('=')
+				let key = pair[0]
+				let val = pair[1]
+				object[key] = val
+			}
+			return object
+		}
+
+		const getp = getparams()
+
+
+		const SECOND =        1000;
+		const MINUTE = SECOND * 60;
+		const HOUR   = MINUTE * 60;
+		const DAY    = HOUR   * 24;
+		var   FIFTY_YEARS = 1577923200000// - (DAY * 50 + HOUR * 7 + MINUTE * 39)// + SECOND * 0);
+		if ('offset' in getp) {
+			FIFTY_YEARS = Number(getp.offset)
+		}
+
+
+	</script>
+	<style type="text/css">
+		#GET {
+			font-size: 48px;
+			font-weight: bold;
+			display: block;
+		}
+
+	</style>
+	<script type="text/javascript" src="events.js"></script>
+	<script type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<script type="text/javascript">
+
+		const tzero = new Date("1971-07-26T13:34:00Z")
+		
+		sections = [
+			{
+				'start':tzero,
+				'#getlabel':'Mission Elapsed Time',
+				'#GET':new Date("1971-07-26T13:34:00Z"),
+				'#begin':"-00:00:00",
+				'#hold1':"-00:00:00",
+				'#hold2':"-00:00:00",
+			},
+			{
+				'start':new Date("1971-07-26T10:04:00Z"),
+				'#getlabel':'Official Countdown Clock',
+				'#GET':new Date("1971-07-26T13:34:01Z"),
+				'#begin':"-00:00:00",
+				'#hold1':"-00:00:00",
+				'#hold2':"-00:00:00",
+			},
+			{
+				'start':new Date("1971-07-26T09:04:00Z"),
+				'#getlabel':'Official Countdown Clock',
+				'#GET':"-03:30:00",
+				'#begin':"-00:00:00",
+				'#hold1':"-00:00:00",
+				'#hold2':new Date("1971-07-26T10:04:01Z"),
+			},
+			{
+				'start':new Date("1971-07-26T03:34:00Z"),
+				'#getlabel':'Official Countdown Clock',
+				'#GET':new Date("1971-07-26T12:34:01Z"),
+				'#begin':"-00:00:00",
+				'#hold1':"-00:00:00",
+				'#hold2':"-01:00:00",
+			},
+			{
+				'start':new Date("1971-07-25T18:00:00Z"),
+				'#getlabel':'Official Countdown Clock',
+				'#GET':"-09:00:00",
+				'#begin':"-00:00:00",
+				'#hold1':new Date("1971-07-26T03:34:01Z"),
+				'#hold2':"-01:00:00",
+			},
+			{
+				'start':new Date("1971-07-24T23:00:00Z"),
+				'#getlabel':'Official Countdown Clock',
+				'#GET':new Date("1971-07-26T03:00:01Z"),
+				'#begin':"-00:00:00",
+				'#hold1':"-09:34:00",
+				'#hold2':"-01:00:00",
+			},
+			{
+				'start':new Date(0),
+				'#getlabel':'Official Countdown Clock',
+				'#GET':"-28:00:00",
+				'#begin':new Date("1971-07-24T23:00:01Z"),
+				'#hold1':"-09:34:00",
+				'#hold2':"-01:00:00",
+			},
+		]
+
+		function get_section(now) {
+			for (var i = 0; i < sections.length; i++) {
+				if (now >= sections[i].start) {
+					return sections[i]
+				}
+			}
+		}
+
+		function date_to_GET(now) {
+			section = get_section(now)
+			var zero = section['#GET']
+			return now.valueOf() - zero.valueOf()
+		}
+
+		function pad(num,len) {
+			num = String(num)
+			while (num.length < len) {
+				num = '0' + num
+			}
+			return num
+		}
+
+		function hms(timedelta,hourpad=3) {
+			if (timedelta < 0) {
+				return "-"+hms(-timedelta,2)
+			}
+			x = timedelta
+			x /= 1000
+			x = Math.floor(x)
+			sec = x % 60
+			x /= 60
+			x = Math.floor(x)
+			min = x % 60
+			x /= 60
+			x = Math.floor(x)
+			// hour = x % 24
+			// x /= 24
+			// x = Math.floor(x)
+			hour = pad(x,hourpad)
+			min = pad(min,2)
+			sec = pad(sec,2)
+
+			return `${hour}:${min}:${sec}`
+		}
+
+		function set_clock(tag, now, section) {
+			var value = section[tag]
+			if (type(value) == String) {
+				$(tag).text(value)
+			} else if (type(value) == Date) {
+				hms_val = hms(now.valueOf() - value.valueOf())
+				$(tag).text(hms_val)
+				// $('title').text('Apollo XV '+hms_val)
+			} else if (type(value) == Number) {
+				end = new Date(section.start.valueOf() + value)
+				// console.log(section.start, value)
+				$(tag).text(hms(now.valueOf() - value - end.valueOf()))
+				// $(tag).text(hms(value))
+			} else {
+				console.log('other',tag)
+			}
+		}
+
+
+		// function print_event(now, previous=false) {
+		// 	for (var i = 0; i < events.length; i++) {
+		// 		// if (now >= events[i].time && events[i].time >= old) {
+		// 		if (events[i].date < now && (events[i].date > old || previous)) {
+		// 			get = hms(events[i].date.valueOf() - tzero.valueOf())
+		// 			console.log(get, events[i].event)
+		// 		}
+		// 	}
+		// }
+
+		function print_event(nGET, now=0, oGET=0, old=0) {
+			for (var i = 0; i < events.length; i++) {
+				var event = events[i]
+				if ( event.pa ? (event.date <= now && event.date > old) : (event.GETk <= nGET && event.GETk > oGET) ) {
+					var minus = event.GET[0] == '-' ? '' : ' '
+					console.log(
+						' '+minus,
+						event.GET, 
+						' '.repeat(14-(minus+event.GET).length), 
+						event.event
+					)
+				}
+			}
+		}
+
+		function do_stuff(nGET, now, oGET, old) {
+			$('#now').text(new Date(now))
+			// $('#now').text(new Date(now).toGMTString())
+			section = get_section(now)
+			$('#getlabel').text(section['#getlabel'])
+			set_clock("#GET",now,section)
+			set_clock("#begin",now,section)
+			set_clock("#hold1",now,section)
+			set_clock("#hold2",now,section)
+			print_event(nGET, now, oGET, old)
+			if (tzero.valueOf() - 200000 < now < tzero.valueOf() + 850000) {
+				updateSVG(now)
+			}
+		}
+
+		var now = new Date() - FIFTY_YEARS
+		var old = new Date() - FIFTY_YEARS
+		var nGET = date_to_GET(now)
+		var oGET = nGET
+		function go() {
+			setInterval(function() {
+				old = now
+				now = new Date() - FIFTY_YEARS
+				oGET = nGET
+				nGET = date_to_GET(now)
+				do_stuff(nGET, now, oGET, old)
+				play_audio(oGET, nGET)
+			}, 1000/36);
+		}
+
+		// print all events that already happened 
+		print_event(nGET, now, -Infinity, -Infinity)
+
+		function test() {
+			var x = new Date("1971-01-31T19:00:00Z")
+			setInterval(function() {
+				x.setTime(x.valueOf() + 1000)
+				do_stuff(x)
+			}, 1000/60);	
+		}
+
+		go()
+
+	</script>
+	<script type="text/javascript">
+
+		function GET(arg1, arg2, arg3) {
+			var hrs, min, sec
+			if (arg2 === undefined) {
+				sec = arg1
+				min = 0
+				hrs = 0
+			} else if (arg3 === undefined) {
+				sec = arg2
+				min = arg1
+				hrs = 0
+			} else {
+				sec = arg3
+				min = arg2
+				hrs = arg1
+			}
+			delta = 0
+			delta += sec * SECOND
+			delta += min * MINUTE
+			delta += hrs * HOUR
+			return new Date(tzero.valueOf() + delta)
+		}
+		
+		// new Event(GET(0),GET(24,0,0), 150, 20, "Pitch",{'text': {'fill':'white'}})
+		// new Event(new Date(events[16].date),new Date(events[22].date), 150, 20, "Pitch",{'text': {'fill':'white'}})
+		// new Event(new Date(events[14].date),new Date(events[15].date), 125, 20, "Yaw",{'text': {'fill':'white'}})
+		// new Event(new Date(events[16].date),new Date(events[17].date), 100, 20, "Roll",{'text': {'fill':'white'}})
+		// new Event(GET(0),GET(24,0,0), 100, 20, "Roll",{'text': {'fill':'white'}})
+
+
+		// let now = new Date() - FIFTY_YEARS
+		// for (var i = 0; i < events.length; i++) {
+		// 	if (events[i].date < now) {
+		// 		get = hms(events[i].date.valueOf() - tzero.valueOf())
+		// 		console.log(get, events[i].event)
+		// 	}
+		// }
+		if (now > tzero) {
+			$("#getlabel").text("Official Countdown Clock")
+		}
+
+		$(document).ready(function() {
+			var audio = new Audio('https://history.nasa.gov/afj/ap14fj/audio/a14-0462200.mp3')
+			$("#getlabel").click(function() {
+				audio.play()
+				console.log('foo')
+			})
+		})
+
+		var delay = hms(FIFTY_YEARS - 1577923200000)
+		console.log(delay.length)
+		console.log(' '.repeat(11-delay.length), delay, '     delay')
+		// console.log(FIFTY_YEARS == 1577923200000 ? 'real time' : 'false time')
+
+		function arrow(timedelta) {
+			FIFTY_YEARS += timedelta
+			$('#offset').val(FIFTY_YEARS)
+			$('#enableaudio').removeClass('danger')
+			updateSVG(new Date() - FIFTY_YEARS)
+		}
+
+	</script>
+<svg>
+	Dynamically Generated Content
+</svg>
+	<center>
+		<span id="getlabel">Ground Elapsed Time</span>
+	<span class="timer" id="GET">000:00:00</span>
+	<span class="timer" id="begin">00:00:00</span>
+	<span class="timer" id="hold1">09:34:00</span>
+	<span class="timer" id="hold2">01:00:00</span>
+	</center>
+	
+<a href="https://history.nasa.gov/afj/ap15fj/index.html">Apollo 15 Mission Log</a>
+<a href="https://www.hq.nasa.gov/alsj/alsj-ApolloAudio.html">Apollo Audio</a>
+
+<button class="danger" id="enableaudio">Enable Audio</button>
+<span id="now">Now</span>
+<table>
+	<tr>
+		<td><button onclick="arrow( DAY)">&larr;</button></td>
+		<td>1 Day</td>
+		<td><button onclick="arrow(-DAY)">&rarr;</button></td>
+	</tr>
+	<tr>
+		<td><button onclick="arrow( HOUR)">&larr;</button></td>
+		<td>1 Hour</td>
+		<td><button onclick="arrow(-HOUR)">&rarr;</button></td>
+	</tr>
+	<tr>
+		<td><button onclick="arrow( 5*MINUTE)">&larr;</button></td>
+		<td>5 Minutes</td>
+		<td><button onclick="arrow(-5*MINUTE)">&rarr;</button></td>
+	</tr>
+	<tr>
+		<td><button onclick="arrow( MINUTE)">&larr;</button></td>
+		<td>1 Minute</td>
+		<td><button onclick="arrow(-MINUTE)">&rarr;</button></td>
+	</tr>
+	<tr>
+		<td><button onclick="arrow( 5*SECOND)">&larr;</button></td>
+		<td>5 Seconds</td>
+		<td><button onclick="arrow(-5*SECOND)">&rarr;</button></td>
+	<tr>
+		<td><button onclick="arrow( SECOND)">&larr;</button></td>
+		<td>1 Second</td>
+		<td><button onclick="arrow(-SECOND)">&rarr;</button></td>
+	</tr>
+	</tr>
+</table>
+<form>
+	<input id="offset" type="hidden" name="offset" value="1577923200000">
+	<button>Refresh</button>
+</form>
+<form>
+	<input type="hidden" name="offset" value="1577923200000">
+	<button>Real Time</button>
+</form>
+<img src="https://history.nasa.gov/afj/ap15fj/pics/gforce.gif">
+</body>
+</html>

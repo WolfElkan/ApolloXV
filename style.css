@@ -1,0 +1,24 @@
+* {
+	/*font-family: sans-serif;*/
+}
+
+svg {
+	border: solid black 1px;
+	display: block;
+}
+
+.danger {
+	background-color: red;
+}
+
+#now {
+	display: block;
+}
+
+form {
+	display: inline;
+}
+
+img {
+	display: none;
+}
