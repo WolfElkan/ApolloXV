@@ -933,6 +933,12 @@ function play_audio(oGET, nGET) {
 	}
 }
 
+function stop_all_audios() {
+	for (var i = 0; i < audios.length; i++) {
+		audios[i].audio.stop()
+	}
+}
+
 $(document).ready(function() {
 
 	$('#enableaudio').click(function() {

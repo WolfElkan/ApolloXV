@@ -212,7 +212,7 @@
 			set_clock("#hold2",now,section)
 			print_event(nGET, now, oGET, old)
 			if (tzero.valueOf() - 200000 < now < tzero.valueOf() + 850000) {
-				updateSVG(now)
+				// updateSVG(now)
 			}
 		}
 
@@ -304,7 +304,8 @@
 			FIFTY_YEARS += timedelta
 			$('#offset').val(FIFTY_YEARS)
 			$('#enableaudio').removeClass('danger')
-			updateSVG(new Date() - FIFTY_YEARS)
+			stop_all_audios()
+			// updateSVG(new Date() - FIFTY_YEARS)
 		}
 
 	</script>
